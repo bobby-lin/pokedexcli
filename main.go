@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/bobby-lin/pokedexcli/internal/api/location"
 	"os"
 )
 
@@ -41,6 +42,16 @@ func getCommands() map[string]cliCommand {
 			name:        "exit",
 			description: "Exit the pokedex",
 			callback:    commandExit,
+		},
+		"map": {
+			name:        "map",
+			description: "Displays name of 20 new locations",
+			callback:    location.CommandLocation,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Displays previous 20 new locations",
+			callback:    location.CommandPreviousLocation,
 		},
 	}
 }
