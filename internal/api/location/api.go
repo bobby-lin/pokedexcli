@@ -2,7 +2,6 @@ package location
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -11,17 +10,16 @@ import (
 type location struct {
 	Count    int    `json:"count"`
 	Next     string `json:"next"`
-	Previous any    `json:"previous"`
+	Previous string `json:"previous"`
 	Results  []struct {
 		Name string `json:"name"`
 		URL  string `json:"url"`
 	} `json:"results"`
 }
 
-func GetLocation() location {
-	fmt.Println("Getting location...")
+func GetLocationData(url string) location {
+	res, err := http.Get(url)
 
-	res, err := http.Get("https://pokeapi.co/api/v2/location")
 	if err != nil {
 		log.Fatal(err)
 	}

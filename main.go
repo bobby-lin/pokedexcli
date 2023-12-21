@@ -37,9 +37,15 @@ func commandExit(c *config) error {
 }
 
 func commandLocation(c *config) error {
-	locations := location.GetLocation()
+	if c.nextUrl == "" {
+		c.nextUrl = "https://pokeapi.co/api/v2/location"
+	}
+	locationData := location.GetLocationData(c.nextUrl)
 
-	for _, v := range locations.Results {
+	c.nextUrl = locationData.Next
+	c.previousUrl = locationData.Previous
+
+	for _, v := range locationData.Results {
 		fmt.Println(v.Name)
 	}
 
@@ -47,6 +53,19 @@ func commandLocation(c *config) error {
 }
 
 func commandPreviousLocation(c *config) error {
+	if c.previousUrl == "" {
+		fmt.Println("Error: No previous 20 locations!")
+		return nil
+	}
+
+	locationData := location.GetLocationData(c.previousUrl)
+	c.nextUrl = locationData.Next
+	c.previousUrl = locationData.Previous
+
+	for _, v := range locationData.Results {
+		fmt.Println(v.Name)
+	}
+
 	return nil
 }
 
@@ -83,11 +102,17 @@ func main() {
 
 	for s.Scan() {
 		commandName := s.Text()
-		c := cmdMap[commandName]
-		err := c.callback(&cf)
+		c, ok := cmdMap[commandName]
 
-		if err != nil {
-			break
+		if !ok {
+			fmt.Println("Error: Invalid command...")
+		} else {
+			err := c.callback(&cf)
+
+			if err != nil {
+				break
+			}
+
 		}
 
 		fmt.Println()
