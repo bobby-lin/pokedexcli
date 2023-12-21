@@ -38,17 +38,3 @@ func GetLocation() location {
 	err = json.Unmarshal(body, &l)
 	return l
 }
-
-func CommandLocation() error {
-	locations := GetLocation()
-
-	for _, v := range locations.Results {
-		fmt.Println(v.Name)
-	}
-
-	return nil
-}
-
-func CommandPreviousLocation() error {
-	return nil
-}
