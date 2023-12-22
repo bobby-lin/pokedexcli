@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bobby-lin/pokedexcli/internal/api/location"
+	"github.com/bobby-lin/pokedexcli/internal/cache"
 	"os"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config) error
+	callback    func(c *config, cache *cache.Cache) error
 }
 
 type config struct {
@@ -19,7 +20,7 @@ type config struct {
 	previousUrl string
 }
 
-func commandHelp(c *config) error {
+func commandHelp(c *config, cache *cache.Cache) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -32,15 +33,16 @@ func commandHelp(c *config) error {
 	return nil
 }
 
-func commandExit(c *config) error {
+func commandExit(c *config, cache *cache.Cache) error {
 	return errors.New("exit")
 }
 
-func commandLocation(c *config) error {
+func commandLocation(c *config, cache *cache.Cache) error {
 	if c.nextUrl == "" {
-		c.nextUrl = "https://pokeapi.co/api/v2/location"
+		c.nextUrl = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
 	}
-	locationData := location.GetLocationData(c.nextUrl)
+
+	locationData := location.GetLocationData(c.nextUrl, cache)
 
 	c.nextUrl = locationData.Next
 	c.previousUrl = locationData.Previous
@@ -52,13 +54,13 @@ func commandLocation(c *config) error {
 	return nil
 }
 
-func commandPreviousLocation(c *config) error {
+func commandPreviousLocation(c *config, cache *cache.Cache) error {
 	if c.previousUrl == "" {
 		fmt.Println("Error: No previous 20 locations!")
 		return nil
 	}
 
-	locationData := location.GetLocationData(c.previousUrl)
+	locationData := location.GetLocationData(c.previousUrl, cache)
 	c.nextUrl = locationData.Next
 	c.previousUrl = locationData.Previous
 
@@ -99,6 +101,7 @@ func main() {
 	s := bufio.NewScanner(os.Stdin)
 	cmdMap := getCommands()
 	cf := config{}
+	cache := cache.NewCache(10)
 
 	for s.Scan() {
 		commandName := s.Text()
@@ -107,12 +110,10 @@ func main() {
 		if !ok {
 			fmt.Println("Error: Invalid command...")
 		} else {
-			err := c.callback(&cf)
-
+			err := c.callback(&cf, &cache)
 			if err != nil {
 				break
 			}
-
 		}
 
 		fmt.Println()
