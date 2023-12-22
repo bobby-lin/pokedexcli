@@ -7,6 +7,7 @@ import (
 	"github.com/bobby-lin/pokedexcli/internal/api/location"
 	"github.com/bobby-lin/pokedexcli/internal/cache"
 	"os"
+	"time"
 )
 
 type cliCommand struct {
@@ -101,7 +102,7 @@ func main() {
 	s := bufio.NewScanner(os.Stdin)
 	cmdMap := getCommands()
 	cf := config{}
-	cache := cache.NewCache(10)
+	currentCache := cache.NewCache(5 * time.Minute)
 
 	for s.Scan() {
 		commandName := s.Text()
@@ -110,7 +111,7 @@ func main() {
 		if !ok {
 			fmt.Println("Error: Invalid command...")
 		} else {
-			err := c.callback(&cf, &cache)
+			err := c.callback(&cf, currentCache)
 			if err != nil {
 				break
 			}
