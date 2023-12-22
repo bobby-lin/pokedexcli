@@ -21,7 +21,7 @@ func NewCache(interval time.Duration) *Cache {
 		Mu:     sync.Mutex{},
 	}
 
-	go reapLoop(&c, interval)
+	go c.reapLoop(interval)
 
 	return &c
 }
@@ -50,8 +50,9 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 	return ce.val, true
 }
 
-func reapLoop(c *Cache, interval time.Duration) {
+func (c *Cache) reapLoop(interval time.Duration) {
 	cacheClearTicker := time.NewTicker(interval)
+
 	for range cacheClearTicker.C {
 		currentTime := time.Now()
 		for k, v := range c.caches {
