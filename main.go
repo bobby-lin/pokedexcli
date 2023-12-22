@@ -7,13 +7,14 @@ import (
 	"github.com/bobby-lin/pokedexcli/internal/api/location"
 	"github.com/bobby-lin/pokedexcli/internal/cache"
 	"os"
+	"strings"
 	"time"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config, cache *cache.Cache) error
+	callback    func(c *config, cache *cache.Cache, param string) error
 }
 
 type config struct {
@@ -21,7 +22,7 @@ type config struct {
 	previousUrl string
 }
 
-func commandHelp(c *config, cache *cache.Cache) error {
+func commandHelp(c *config, cache *cache.Cache, param string) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -34,11 +35,11 @@ func commandHelp(c *config, cache *cache.Cache) error {
 	return nil
 }
 
-func commandExit(c *config, cache *cache.Cache) error {
+func commandExit(c *config, cache *cache.Cache, param string) error {
 	return errors.New("exit")
 }
 
-func commandLocation(c *config, cache *cache.Cache) error {
+func commandLocation(c *config, cache *cache.Cache, param string) error {
 	if c.nextUrl == "" {
 		c.nextUrl = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
 	}
@@ -55,7 +56,7 @@ func commandLocation(c *config, cache *cache.Cache) error {
 	return nil
 }
 
-func commandPreviousLocation(c *config, cache *cache.Cache) error {
+func commandPreviousLocation(c *config, cache *cache.Cache, param string) error {
 	if c.previousUrl == "" {
 		fmt.Println("Error: No previous 20 locations!")
 		return nil
@@ -67,6 +68,22 @@ func commandPreviousLocation(c *config, cache *cache.Cache) error {
 
 	for _, v := range locationData.Results {
 		fmt.Println(v.Name)
+	}
+
+	return nil
+}
+
+func commandExplore(c *config, cache *cache.Cache, area string) error {
+	fmt.Println("Exploring", area+"...")
+	a, err := location.GetLocationArea(cache, "https://pokeapi.co/api/v2/location-area/"+area)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Found Pokemon:")
+	for _, v := range a.PokemonEncounters {
+		fmt.Println("-", v.Pokemon.Name)
 	}
 
 	return nil
@@ -94,6 +111,11 @@ func getCommands() map[string]cliCommand {
 			description: "Displays previous 20 new locations",
 			callback:    commandPreviousLocation,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Displays list of pokemon in the location",
+			callback:    commandExplore,
+		},
 	}
 }
 
@@ -105,15 +127,25 @@ func main() {
 	currentCache := cache.NewCache(5 * time.Minute)
 
 	for s.Scan() {
-		commandName := s.Text()
-		c, ok := cmdMap[commandName]
+		commandInputs := s.Text()
+		commandArr := strings.Split(commandInputs, " ")
+		c, ok := cmdMap[commandArr[0]]
+
+		if c.name == "exit" {
+			break
+		}
+
+		param := ""
+		if len(commandArr) > 1 {
+			param = commandArr[1]
+		}
 
 		if !ok {
 			fmt.Println("Error: Invalid command...")
 		} else {
-			err := c.callback(&cf, currentCache)
+			err := c.callback(&cf, currentCache, param)
 			if err != nil {
-				break
+				fmt.Println("Error:", err)
 			}
 		}
 
