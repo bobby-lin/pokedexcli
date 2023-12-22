@@ -52,7 +52,7 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 
 func reapLoop(c *Cache, interval time.Duration) {
 	cacheClearTicker := time.NewTicker(interval)
-	for _ = range cacheClearTicker.C {
+	for range cacheClearTicker.C {
 		currentTime := time.Now()
 		for k, v := range c.caches {
 			if currentTime.Sub(v.createdAt) > interval {
