@@ -30,3 +30,10 @@ func DisplayPokemonInfo(p Pokemon) {
 		fmt.Println("  -" + v.Type.Name)
 	}
 }
+
+func DisplayAllCaughtPokemon(pokedex map[string]Pokemon) {
+	fmt.Println("Your Pokedex:")
+	for k, _ := range pokedex {
+		fmt.Println(" -", k)
+	}
+}

@@ -118,6 +118,11 @@ func commandInspect(c *config, cache *cache.Cache, name string) error {
 	return nil
 }
 
+func commandPokedex(cfg *config, cache *cache.Cache, param string) error {
+	pokemon.DisplayAllCaughtPokemon(cfg.pokedex)
+	return nil
+}
+
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
@@ -154,6 +159,11 @@ func getCommands() map[string]cliCommand {
 			name:        "inspect",
 			description: "Display pokemon info in pokedex",
 			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Display list of pokemon caught by user",
+			callback:    commandPokedex,
 		},
 	}
 }
