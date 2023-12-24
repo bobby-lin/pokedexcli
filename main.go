@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bobby-lin/pokedexcli/internal/api/location"
+	"github.com/bobby-lin/pokedexcli/internal/api/pokemon"
 	"github.com/bobby-lin/pokedexcli/internal/cache"
 	"os"
 	"strings"
@@ -89,6 +90,22 @@ func commandExplore(c *config, cache *cache.Cache, area string) error {
 	return nil
 }
 
+func commandCatch(c *config, cache *cache.Cache, name string) error {
+	p, err := pokemon.GetPokemonInfo(name)
+
+	if err != nil {
+		return err
+	}
+
+	isCaught := pokemon.CatchPokemon(name, p.BaseExperience)
+
+	if isCaught {
+		fmt.Println("Storing pokemon to Pokedex")
+	}
+
+	return nil
+}
+
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
@@ -115,6 +132,11 @@ func getCommands() map[string]cliCommand {
 			name:        "explore",
 			description: "Displays list of pokemon in the location",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch a pokemon",
+			callback:    commandCatch,
 		},
 	}
 }
