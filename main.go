@@ -108,6 +108,16 @@ func commandCatch(c *config, cache *cache.Cache, name string) error {
 	return nil
 }
 
+func commandInspect(c *config, cache *cache.Cache, name string) error {
+	p, err := pokemon.InspectPokedex(c.pokedex, name)
+	if err != nil {
+		return err
+	}
+
+	pokemon.DisplayPokemonInfo(p)
+	return nil
+}
+
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
@@ -140,6 +150,11 @@ func getCommands() map[string]cliCommand {
 			description: "Attempt to catch a pokemon",
 			callback:    commandCatch,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Display pokemon info in pokedex",
+			callback:    commandInspect,
+		},
 	}
 }
 
@@ -171,7 +186,7 @@ func main() {
 		} else {
 			err := c.callback(&cf, currentCache, param)
 			if err != nil {
-				fmt.Println("Error:", err)
+				fmt.Println(err)
 			}
 		}
 
