@@ -15,7 +15,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config, cache *cache.Cache, param string) error
+	callback    func(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error
 }
 
 type config struct {
@@ -23,7 +23,7 @@ type config struct {
 	previousUrl string
 }
 
-func commandHelp(c *config, cache *cache.Cache, param string) error {
+func commandHelp(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -36,11 +36,11 @@ func commandHelp(c *config, cache *cache.Cache, param string) error {
 	return nil
 }
 
-func commandExit(c *config, cache *cache.Cache, param string) error {
+func commandExit(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
 	return errors.New("exit")
 }
 
-func commandLocation(c *config, cache *cache.Cache, param string) error {
+func commandLocation(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
 	if c.nextUrl == "" {
 		c.nextUrl = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
 	}
@@ -57,7 +57,7 @@ func commandLocation(c *config, cache *cache.Cache, param string) error {
 	return nil
 }
 
-func commandPreviousLocation(c *config, cache *cache.Cache, param string) error {
+func commandPreviousLocation(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
 	if c.previousUrl == "" {
 		fmt.Println("Error: No previous 20 locations!")
 		return nil
@@ -74,7 +74,7 @@ func commandPreviousLocation(c *config, cache *cache.Cache, param string) error 
 	return nil
 }
 
-func commandExplore(c *config, cache *cache.Cache, area string) error {
+func commandExplore(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, area string) error {
 	fmt.Println("Exploring", area+"...")
 	a, err := location.GetLocationArea(cache, "https://pokeapi.co/api/v2/location-area/"+area)
 
@@ -90,7 +90,7 @@ func commandExplore(c *config, cache *cache.Cache, area string) error {
 	return nil
 }
 
-func commandCatch(c *config, cache *cache.Cache, name string) error {
+func commandCatch(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, name string) error {
 	p, err := pokemon.GetPokemonInfo(name)
 
 	if err != nil {
@@ -101,6 +101,7 @@ func commandCatch(c *config, cache *cache.Cache, name string) error {
 
 	if isCaught {
 		fmt.Println("Storing pokemon to Pokedex")
+		pokedex[name] = p
 	}
 
 	return nil
@@ -147,6 +148,7 @@ func main() {
 	cmdMap := getCommands()
 	cf := config{}
 	currentCache := cache.NewCache(5 * time.Minute)
+	pokedexData := make(map[string]pokemon.Pokemon)
 
 	for s.Scan() {
 		commandInputs := s.Text()
@@ -165,7 +167,7 @@ func main() {
 		if !ok {
 			fmt.Println("Error: Invalid command...")
 		} else {
-			err := c.callback(&cf, currentCache, param)
+			err := c.callback(&cf, currentCache, pokedexData, param)
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
