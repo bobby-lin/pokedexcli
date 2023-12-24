@@ -15,15 +15,16 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error
+	callback    func(c *config, cache *cache.Cache, param string) error
 }
 
 type config struct {
 	nextUrl     string
 	previousUrl string
+	pokedex     map[string]pokemon.Pokemon
 }
 
-func commandHelp(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
+func commandHelp(c *config, cache *cache.Cache, param string) error {
 	fmt.Println()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -36,11 +37,11 @@ func commandHelp(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokem
 	return nil
 }
 
-func commandExit(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
+func commandExit(c *config, cache *cache.Cache, param string) error {
 	return errors.New("exit")
 }
 
-func commandLocation(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
+func commandLocation(c *config, cache *cache.Cache, param string) error {
 	if c.nextUrl == "" {
 		c.nextUrl = "https://pokeapi.co/api/v2/location?offset=0&limit=20"
 	}
@@ -57,7 +58,7 @@ func commandLocation(c *config, cache *cache.Cache, pokedex map[string]pokemon.P
 	return nil
 }
 
-func commandPreviousLocation(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, param string) error {
+func commandPreviousLocation(c *config, cache *cache.Cache, param string) error {
 	if c.previousUrl == "" {
 		fmt.Println("Error: No previous 20 locations!")
 		return nil
@@ -74,7 +75,7 @@ func commandPreviousLocation(c *config, cache *cache.Cache, pokedex map[string]p
 	return nil
 }
 
-func commandExplore(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, area string) error {
+func commandExplore(c *config, cache *cache.Cache, area string) error {
 	fmt.Println("Exploring", area+"...")
 	a, err := location.GetLocationArea(cache, "https://pokeapi.co/api/v2/location-area/"+area)
 
@@ -90,7 +91,7 @@ func commandExplore(c *config, cache *cache.Cache, pokedex map[string]pokemon.Po
 	return nil
 }
 
-func commandCatch(c *config, cache *cache.Cache, pokedex map[string]pokemon.Pokemon, name string) error {
+func commandCatch(c *config, cache *cache.Cache, name string) error {
 	p, err := pokemon.GetPokemonInfo(name)
 
 	if err != nil {
@@ -101,7 +102,7 @@ func commandCatch(c *config, cache *cache.Cache, pokedex map[string]pokemon.Poke
 
 	if isCaught {
 		fmt.Println("Storing pokemon to Pokedex")
-		pokedex[name] = p
+		c.pokedex[name] = p
 	}
 
 	return nil
@@ -147,8 +148,9 @@ func main() {
 	s := bufio.NewScanner(os.Stdin)
 	cmdMap := getCommands()
 	cf := config{}
+	cf.pokedex = make(map[string]pokemon.Pokemon)
+
 	currentCache := cache.NewCache(5 * time.Minute)
-	pokedexData := make(map[string]pokemon.Pokemon)
 
 	for s.Scan() {
 		commandInputs := s.Text()
@@ -167,7 +169,7 @@ func main() {
 		if !ok {
 			fmt.Println("Error: Invalid command...")
 		} else {
-			err := c.callback(&cf, currentCache, pokedexData, param)
+			err := c.callback(&cf, currentCache, param)
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
